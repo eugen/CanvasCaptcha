@@ -2,15 +2,23 @@ function rnd(mul) {
     return (Math.random() * 2 - 1) * 0.1 * (mul === undefined ? 1 : mul);
 };
 function drawGlyph(ctx, glyph) {
-    var outline = glyph.o.split(' ');
+    var outline = glyph.outline;
+    if(!outline) { 
+	outline = glyph.outline = glyph.o.split(' ').map(function(e) { 
+	    var i = parseInt(e);
+	    return isNaN(i) ? e : i;
+	});
+    }
     ctx.save();
     for (var i = 0; i < outline.length; ) {
-	//per-glyph transform
+	// smaller per-glyph accumulative transform
 	ctx.transform(1 + rnd(0.05), rnd(0.05), rnd(0.05), 1 + rnd(0.2), rnd(100), rnd(100));
+	ctx.rotate(rnd(0.1));
 
 	ctx.save();
 
-	//per-curve transform
+	/*
+	//per-curve non-accumulative transform
 	ctx.transform(
 	    1 + rnd(0.2), // scale x
 	    rnd(0.01), // shear x
@@ -21,6 +29,7 @@ function drawGlyph(ctx, glyph) {
 
 	// simpler to express rotation here
 	ctx.rotate(Math.PI * rnd(0.2));
+	*/
 
 	var action = outline[i++];
 
@@ -31,13 +40,11 @@ function drawGlyph(ctx, glyph) {
 	case 'l':
 	    ctx.lineTo(outline[i++], outline[i++]);
 	    break;
-
 	case 'q':
 	    var cpx = outline[i++];
 	    var cpy = outline[i++];
 	    ctx.quadraticCurveTo(outline[i++], outline[i++], cpx, cpy);
 	    break;
-
 	case 'b':
 	    var x = outline[i++];
 	    var y = outline[i++];
@@ -50,30 +57,48 @@ function drawGlyph(ctx, glyph) {
     ctx.restore();
 };
 
-function drawWord(ctx, y, word) { 
+function drawWord(font, ctx, x, word) { 
     ctx.save();
-    ctx.translate(100, -y);
+    ctx.translate(x, -1800);
     for(var i = 0; i < word.length; i++) {
 	var c = word[i];
+	
+	//large-ish per-word accumulative transform
 	ctx.transform(1-rnd(), rnd(1), rnd(), 1 + rnd(2), rnd(1), rnd());
+
 	ctx.beginPath();
 	var glyph = font.glyphs[c];
 	drawGlyph(ctx, glyph);
-	// overlap the letters a bit
+	// overlap the letters quite a bit
 	ctx.translate(glyph.ha * 0.8 - 45, 0);
+	// without strokes, some edges dissapear when confronted with the extreme
+	ctx.stroke();
 	ctx.fill();
     }
     ctx.restore();
 };
 
-$(function() { 
-    var canvas = $('#glyphs')[0];
-    var ctx = canvas.getContext('2d');
+var gentilis = require("./fonts/gentilis.js");
+var optimer = require("./fonts/optimer.js");
+var helvetiker = require("./fonts/helvetiker.js");
+var Canvas = require('canvas');
+var fs = require('fs');
 
-    ctx.scale(0.03, -0.03);
+var canvas = new Canvas(250, 100);
+var ctx = canvas.getContext('2d');
 
-    var y = 0
-    "caprtcha absoelutely bestwest recognaise onlaine yajhoo hasspiwit invincible".split(' ').forEach(function(word) { 
-	drawWord(ctx, y+=2500, word);
-    });
+ctx.fillStyle = "navy";
+ctx.scale(0.04, -0.04);
+
+var x = 100;
+"recognaise absoelutely bestwest onlaine yajhoo hasspiwit invincible".split(' ').forEach(function(word) { 
+    drawWord(optimer.font, ctx, x, word);
+    x += 10000;
+});
+
+var out = fs.createWriteStream(__dirname + '/captcha.png')
+  , stream = canvas.createPNGStream();
+
+stream.on('data', function(chunk){
+  out.write(chunk);
 });
