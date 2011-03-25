@@ -91,6 +91,7 @@ drawCaptcha = (function() {
 
 	var ctx = o.context;
 	ctx.save();
+	ctx.clearRect(0, 0, 1000, 1000);
 	if(o.bgStyle) {
 	    ctx.fillStyle = o.bgStyle;
 	    ctx.fillRect(0, 0, 1000, 1000);

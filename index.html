@@ -8,8 +8,9 @@
     <script src="fonts/helvetiker.js"></script>
     <script src="canvasCaptcha.js"></script>
   </head>
-  <body>
+  <body style="background-color: #ABA">
     <input id="text" value="canvas captcha" />
+    <br />
     <canvas id="glyphs" width="400" height="150"></canvas>
 
     <script>
@@ -17,9 +18,8 @@
         var ctx = $("#glyphs")[0].getContext('2d');
         drawCaptcha({
           context: ctx, 
-          font: gentilis, 
-          style: 'white',
-          bgStyle: 'black',
+          font: optimer, 
+          style: 'navy',
           text: $("#text").val()
         });
       }
