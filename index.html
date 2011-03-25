@@ -2,11 +2,32 @@
 <html>
   <head>
     <script src="jquery-1.5.1.min.js"></script>
-    <!-- <script src="helvetiker_regular.typeface.js"></script> -->
-    <script src="gentilis_regular.typeface.js"></script>
+    <!-- <script src="fonts/helvetiker.js"></script> -->
+    <script src="fonts/gentilis.js"></script>
+    <script src="fonts/optimer.js"></script>
+    <script src="fonts/helvetiker.js"></script>
     <script src="canvasCaptcha.js"></script>
   </head>
   <body>
-    <canvas id="glyphs" width="1000" height="1000"></canvas>
+    <input id="text" value="canvas captcha" />
+    <canvas id="glyphs" width="400" height="150"></canvas>
+
+    <script>
+      function updateCaptcha() {
+        var ctx = $("#glyphs")[0].getContext('2d');
+        drawCaptcha({
+          context: ctx, 
+          font: gentilis, 
+          style: 'white',
+          bgStyle: 'black',
+          text: $("#text").val()
+        });
+      }
+      $(function() { 
+        $("#text").change(updateCaptcha);
+        $("#text").keydown(function() { window.setTimeout(updateCaptcha, 1) });
+        updateCaptcha();
+      });
+    </script>
   </body>
 </html>
