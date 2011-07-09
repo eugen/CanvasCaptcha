@@ -1,4 +1,4 @@
-drawCaptcha = (function() { 
+var drawCaptcha = (function() { 
     function rnd(mul) { 
 	return (Math.random() * 2 - 1) * 0.1 * (mul === undefined ? 1 : mul);
     };
@@ -12,12 +12,12 @@ drawCaptcha = (function() {
 	}
 	ctx.save();
 	for (var i = 0; i < outline.length; ) {
-	    // smaller per-glyph accumulative transform
 	    ctx.transform(1 + rnd(0.05), rnd(0.05), rnd(0.05), 1 + rnd(0.2), rnd(100), rnd(100));
 	    ctx.rotate(rnd(0.1));
 
 	    ctx.save();
 
+	    // keep this disabled
 	    /*
 	    //per-curve non-accumulative transform
 	    ctx.transform(
@@ -109,32 +109,51 @@ drawCaptcha = (function() {
 
 })();
 
-function drawTests(canvas, font) { 
-}
-
-/* if Running under node, render the text and exit */
+/* if Running under node, initialize stuff */
 if(typeof require != 'undefined') {
-
     var gentilis = require("./fonts/gentilis.js");
     var optimer = require("./fonts/optimer.js");
     var helvetiker = require("./fonts/helvetiker.js");
     var Canvas = require('canvas');
+    var redis = require('redis');
     var fs = require('fs');
+    
+    var words = fs.readFileSync("/usr/share/dict/words", "utf8").split("\n");
+    // filter only words that are all lowercase and of a certain length
+    words = words.filter(function(w) { return /^[a-z]{7,10}$/.test(w); });
+    console.log("Found " + words.length + " appropriate words");
+    var letters="abcdefghijklmnopqrstuvwxyz";
+    
+    var rndInt = function(max) { 
+	return Math.floor(Math.random() * max);
+    }
 
-    var canvas = new Canvas(250, 100);
-    var ctx = canvas.getContext('2d');
-    drawCaptcha({
-	context: ctx, 
-	font: gentilis.font, 
-	style: 'black',
-	bgStyle: '#FDFEFF',
-	text: "canvas captcha"
-    });
+    exports.createCaptcha = function() {
+	var canvas = new Canvas(250, 150);
+	var ctx = canvas.getContext('2d');
+	// get a random word
+	var word = words[rndInt(words.length)];
+	// add/remove random letters to it
+	if(Math.random() > 0.8) {
+	    var pos = rndInt(word.length);
+	    word = word.substring(0, pos) + letters[rndInt(letters.length)] + word.substring(pos);
+	}
+	if(Math.random() < 0.3) {
+	    var pos = rndInt(word.length);
+	    word = word.substring(0, pos - 1) + word.substring(pos);
+	}
 
-    var out = fs.createWriteStream(__dirname + '/captcha.png'),
-        stream = canvas.createPNGStream();
+	drawCaptcha({
+	    context: ctx, 
+	    font: gentilis.font, 
+	    style: 'black',
+//	    bgStyle: '#FDFEFF',
+	    text: word
+	});
 
-    stream.on('data', function(chunk){
-	out.write(chunk);
-    });
+	return {
+	    url: canvas.toDataURL(),
+	    word: word
+	};
+    }
 }
