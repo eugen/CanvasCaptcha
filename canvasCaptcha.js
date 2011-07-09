@@ -115,7 +115,6 @@ if(typeof require != 'undefined') {
     var optimer = require("./fonts/optimer.js");
     var helvetiker = require("./fonts/helvetiker.js");
     var Canvas = require('canvas');
-    var redis = require('redis');
     var fs = require('fs');
     
     var words = fs.readFileSync("/usr/share/dict/words", "utf8").split("\n");
